@@ -6,7 +6,7 @@
 
 ## Overview
 
-This project documents the design, implementation, and operation of a small-scale corporate infrastructure built entirely in VirtualBox. The lab features a multi-zone network architecture (WAN, DMZ, LAN), centralized identity management, SIEM deployment, and controlled attack simulation — mirroring the kind of environment found in real enterprise SOC operations.
+This project documents the design, implementation, and operation of a small-scale corporate infrastructure built entirely in VirtualBox. The lab features a multi-zone network architecture (WAN, DMZ, LAN), centralized identity management, SIEM deployment, and controlled attack simulation.
 
 ---
 
@@ -69,7 +69,7 @@ This project documents the design, implementation, and operation of a small-scal
 
 ## Documentation
 
-Each device has a dedicated note serving as its single source of truth:
+Each device has a dedicated note serving as its single source of truth in documentations/:
 
 - [`High-level Design.md`](High-level%20Design.md) — Architecture, network design, asset inventory, and design decisions
 - [`EDGE-RTR01.md`](EDGE-RTR01.md) — Edge router configuration
@@ -91,9 +91,3 @@ Each device has a dedicated note serving as its single source of truth:
 - [ ] Evaluate VyOS as an alternative edge router
 - [ ] Implement RADIUS/NPS for pfSense authentication
 - [ ] Explore AI enrichment for SIEM log analysis
-
----
-
-## References
-
-- [So You Want to Be a SOC Analyst? — Eric Capuano](https://blog.ecapuano.com/p/so-you-want-to-be-a-soc-analyst-intro)
