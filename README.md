@@ -69,15 +69,15 @@ This project documents the design, implementation, and operation of a small-scal
 
 ## Documentation
 
-Each device has a dedicated note serving as its single source of truth in documentations/:
+Each device has a dedicated note serving as its single source of truth in documentation:
 
-- [`High-level Design.md`](High-level%20Design.md) — Architecture, network design, asset inventory, and design decisions
-- [`EDGE-RTR01.md`](EDGE-RTR01.md) — Edge router configuration
-- [`PFSENSE-FW01.md`](PFSENSE-FW01.md) — Firewall rules and routing
-- [`DC01.md`](DC01.md) — Active Directory, DNS, OU structure
-- [`PC01.md`](PC01.md) — Workstation setup and domain join
-- [`WAZUH-SIEM01.md`](WAZUH-SIEM01.md) — SIEM deployment and agent management
-- [`ATTACKER01.md`](ATTACKER01.md) — Attacker machine setup
+- [`documentation/High-level Design.md`](documentation/High-level%20Design.md) — Architecture, network design, asset inventory, and design decisions
+- [`documentation/EDGE-RTR01.md`](documentation/EDGE-RTR01.md) — Edge router configuration
+- [`documentation/PFSENSE-FW01.md`](documentation/PFSENSE-FW01.md) — Firewall rules and routing
+- [`documentation/DC01.md`](documentation/DC01.md) — Active Directory, DNS, OU structure
+- [`documentation/PC01.md`](documentation/PC01.md) — Workstation setup and domain join
+- [`documentation/WAZUH-SIEM01.md`](documentation/WAZUH-SIEM01.md) — SIEM deployment and agent management
+- [`documentation/ATTACKER01.md`](documentation/ATTACKER01.md) — Attacker machine setup
 
 ---
 
