@@ -16,7 +16,9 @@ status: in-progress
 
 ATTACKER01 is the primary threat actor system in this lab environment. It resides in the **WAN_NET** segment, simulating an external attacker attempting to breach the network perimeter. It is also used for vulnerability scanning and executing various attack scenarios against the DMZ and internal networks.
 
-## VM Specifications
+---
+
+## VM Hardware Configuration
 
 | Feature     | Configuration                           |
 | :---------- | :-------------------------------------- |
@@ -42,7 +44,7 @@ To quickly set up the attacker system, we utilize the official Kali Linux Virtua
 
 The `WAN_NET` segment is configured without DHCP to simulate a controlled public IP space. We must manually assign the static IP, default gateway, and DNS server using the Network Manager CLI (`nmcli`).
 
-### 1. Identify the Connection
+### Identify the Connection
 First, verify the connection name bound to the `eth0` interface:
 
 ```bash
@@ -54,7 +56,7 @@ nmcli con show
 > [!NOTE]
 > In this case, the connection name is **"WAN_NET"**, which is bound to device `eth0`.
 
-### 2. Assign Static IP & Gateway
+### Assign Static IP & Gateway
 Apply the following commands to configure the static network settings:
 
 ```bash
@@ -137,7 +139,7 @@ nmcli con mod "Wired connection 1" connection.id "LAN_NET"
 
 If `nmcli con show` only displays the loopback interface, you must create a new connection from scratch.
 
-### 1. Verify Interface Name
+### Verify Interface Name
 Check the available interfaces:
 
 ```bash
@@ -148,7 +150,7 @@ ip addr show
 
 Confirm that the target interface is indeed `eth0`.
 
-### 2. Create the Connection
+### Create the Connection
 Manually create and bind the connection to the interface:
 
 ```bash

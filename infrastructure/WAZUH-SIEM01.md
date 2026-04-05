@@ -61,7 +61,7 @@ Wazuh documentation recommends the following specifications for environments wit
 
 ## OS Installation & Configuration
 
-### 1. Installation & Initial Updates
+### Installation & Initial Updates
 
 During the Ubuntu Server installation, use the following credentials:
 
@@ -70,7 +70,7 @@ During the Ubuntu Server installation, use the following credentials:
 | **Username** | `wazuh-siem01` |
 | **Password** | `P@ssw0rd123`  |
 
-### 2. Network Configuration (Netplan)
+### Network Configuration (Netplan)
 
 Before doing anything else, set a static IP for this server. Similarly to EDGE-RTR01, this is done with Netplan.
 
@@ -94,7 +94,8 @@ ip a
 resolvectl status
 ```
 
-![](../_attachments/12a88f16a740423942a0a6d6c1b63370916a1faa459db07d1613ccf96aea70de.webp)
+![](../_attachments/WAZUH-SIEM01-netplan-disabledhcp.webp)
+
 ![](../_attachments/WAZUH-SIEM01-verify-netplan-is-working.webp)
 
 **Configuration Summary:**
@@ -126,7 +127,7 @@ resolvectl status
 
 ```bash
 nslookup 192.168.20.20
-# Expected: wazuh-siem01.lab.internal
+# Expected: wazuh.lab.internal
 ```
 
 ![](../_attachments/WAZUH-SIEM01-verify-ptr.webp)
@@ -142,7 +143,7 @@ ssh wazuh-siem01@192.168.20.20
 
 # OR
 
-ssh wazuh-siem01@wazuh-siem01.lab.internal
+ssh wazuh-siem01@wazuh.lab.internal
 ```
 
 ![](../_attachments/WAZUH-SIEM01-ssh-from-kali-1.webp)
@@ -151,11 +152,11 @@ Follow the steps described here: [Quickstart · Wazuh documentation](https://doc
 
 Once complete, access the dashboard using the credentials below:
 
-| Field        | Value                                         |
-| :----------- | :-------------------------------------------- |
-| **Username** | `admin`                                       |
-| **Password** | `6kN+Inwz2HU9GnTY*Fmt9DxshWLKTGbq`            |
-| **URL**      | `https://wazuh-siem01.lab.internal/app/login` |
+| Field        | Value                                  |
+| :----------- | :------------------------------------- |
+| **Username** | `admin`                                |
+| **Password** | `6kN+Inwz2HU9GnTY*Fmt9DxshWLKTGbq`     |
+| **URL**      | `https://wazuh.lab.internal/app/login` |
 
 ![](../_attachments/WAZUH-SIEM01-installation-finished.webp)
 ![](../_attachments/WAZUH-SIEM01-login-screen.webp)
@@ -171,20 +172,104 @@ apt update
 ![](../_attachments/WAZUH-SIEM01-disable-update.webp)
 
 ## Deploying Agents
-Creating agents is done through the web interface `https://wazuh.lab.internal/` .
+
+Agents are deployed through the web interface at `https://wazuh.lab.internal/`. The UI walks through the process of deploying an agent on an endpoint by generating a custom install command that can be run directly on the target machine.
 
 ![](../_attachments/WAZUH-SIEM01-new-agent-1.webp)
 
-This runs you through the process of deploying an agent on an endpoint by creating a custom command line script that you can run.
+---
 
-### Agent for DC01
+### Creating Agent Groups
+
+Wazuh groups allow us to push a single configuration uniformly to all agents in that group. In the context of this lab, this is useful because rather than configuring each agent individually to ingest Sysmon logs, we can push a single `agent.conf` to all agents in the group at once.
+
+#### Groups
+
+| Group | Purpose |
+| :--- | :--- |
+| `windows-baseline` | Common config for all Windows endpoints |
+| `domain-controllers` | DC-specific config (AD logs, stricter Sysmon) |
+| `linux-baseline` | Common config for all Linux endpoints |
+
+#### Group Membership
+
+| Device | Groups | Method |
+| :--- | :--- | :--- |
+| DC01 | `windows-baseline`, `domain-controllers` | Wazuh agent |
+| PC01 | `windows-baseline` | Wazuh agent |
+| WSUS01 | `windows-baseline` | Wazuh agent |
+| ELK-SIEM01 | `linux-baseline` | Wazuh agent |
+| EDGE-RTR01 | — | Syslog forwarding only |
+| PFSENSE-FW01 | — | Syslog forwarding only |
+| WAZUH-SIEM01 | — | Configured locally via `/var/ossec/etc/ossec.conf` |
+
+> [!NOTE]
+> WAZUH-SIEM01 is agent ID `000` — the manager itself. It cannot be assigned to a group and is configured directly on the host.
+
+Groups are created by navigating to **Agent Management → Groups**.
+
+![](../_attachments/WAZUH-SIEM01-created-groups.webp)
+
+---
+
+### Adding Sysmon Log Ingestion to windows-baseline
+
+Navigate to the `agent.conf` for the group via **Agent Management → Groups → windows-baseline → Files → agent.conf**.
+
+![](../_attachments/WAZUH-SIEM01-windows-baseline-1.webp)
+
+Add the following block:
+
+![](../_attachments/WAZUH-SIEM01-windows-baseline-2.webp)
+
+#### Verifying Ingestion
+
+To confirm logs are flowing, check one of the agents in the `windows-baseline` group. Using DC01 as an example — navigate to **DC01 → Threat Hunting → Events** and run the following query:
+
+```
+data.win.system.channel: "Microsoft-Windows-Sysmon/Operational"
+```
+
+If Sysmon events appear as below, the agent is correctly ingesting Sysmon logs.
+
+![](../_attachments/WAZUH-SIEM01-DC01-example-sysmon-logs.webp)
+
+---
+
+### Deploying an Agent on Windows Machines
+
+The following steps apply to any Windows machine in the lab. DC01 is used as the example here.
+
+Generate the install command from the web interface, selecting Windows as the OS:
 
 ![](../_attachments/WAZUH-SIEM01-DC01-agent.webp)
 
+Copy the generated PowerShell command and paste it into an **elevated PowerShell terminal** on the target machine.
 
-but
+> [!NOTE]
+> This requires a privileged account to run.
+
+![](../_attachments/WAZUH-SIEM01-DC01-agent-started-installed.webp)
+
+Once complete, the agent will appear in the web interface as active.
+
+![](../_attachments/WAZUH-SIEM01-DC01-agent-web.webp)
 
 ---
+
+### Assigning Agents to Groups
+
+Navigate to **Agent Management → Groups → \<group-name\> → Manage Agents**, select the agent, and add it.
+
+Using DC01 as an example — add it to both `domain-controllers` and `windows-baseline`:
+
+![](../_attachments/WAZUH-SIEM01-DC01-into-domain-controllers.webp)
+
+![](../_attachments/WAZUH-SIEM01-DC01-group-membership.webp)
+
+
+
+
 ## Troubleshooting
 
 ### LVM Not Claiming Full Virtual Disk
@@ -220,4 +305,21 @@ sudo systemctl status wazuh-dashboard
 
 # Enable auto-start on boot (if not already enabled)
 sudo systemctl enable wazuh-manager wazuh-indexer wazuh-dashboard
+```
+
+### Manager not monitoring SSH Logins
+Wazuh-agent by default monitors ssh but this is not necessarily true for the wazuh-manager machine, which runs agent.id 000.
+My best guess as to why this is the case is that the user is intended to only ever change config files through the web UI. Regardless, it is good hygiene to track SSH logins.
+
+To do so, add the following section to /var/ossec/etc/ossec.conf
+```
+<localfile>
+	<log_format>syslog</log_format>
+	<location>/var/log/auth.log</location>
+</localfile>
+```
+Then restart the manager
+```bash
+# need to be super user for this
+systemctl restart wazuh-manager
 ```

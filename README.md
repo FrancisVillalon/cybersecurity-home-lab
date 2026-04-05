@@ -1,93 +1,155 @@
-# Cybersecurity Home Lab
+---
+tags:
+  - lab-documentation
+  - overview
+  - architecture
+  - lab-infrastructure
+type: reference
+domain: lab.internal
+network-segments:
+  - WAN_NET: 203.0.113.0/24
+  - DMZ_NET: 192.168.10.0/24
+  - LAN_NET: 192.168.20.0/24
+status: in-progress
+---
 
-> A fully virtualized enterprise network environment designed for hands-on practice in defensive security operations, network engineering, and attack simulation.
+# Cybersecurity Home Lab: Introduction
+
+This project documents the design, implementation, and operation of a virtualized enterprise network environment with two core learning objectives. The first is infrastructure engineering — building a realistic multi-zone network (WAN, DMZ, and LAN) from scratch, covering routing, firewalling, network segmentation, and security monitoring. The second is AI security research — deploying a real agentic AI application as a deliberate attack target in the DMZ and systematically exploring its attack surface within a realistic network context.
 
 ---
 
-## Overview
+## Attack Simulations
 
-This project documents the design, implementation, and operation of a small-scale corporate infrastructure built entirely in VirtualBox. The lab features a multi-zone network architecture (WAN, DMZ, LAN), centralized identity management, SIEM deployment, and controlled attack simulation.
+| # | Simulation | Summary |
+|---|---|---|
+| 1 | [Agentic AI Exploitation](Agentic%20AI%20Exploitation.md) | Prompt injection against a vulnerable agentic AI application in the DMZ — results in arbitrary file write as root with no privilege escalation required. |
 
 ---
 
-## Architecture
+## Project Scope
 
-### Network Zones
-
-| Segment | Trust Level | CIDR | Purpose |
-| :--- | :--- | :--- | :--- |
-| **WAN_NET** | Untrusted | `203.0.113.0/24` | Simulates the public internet — origin of all external threats |
-| **DMZ_NET** | Screened | `192.168.10.0/24` | Buffer zone hosting publicly accessible services |
-| **LAN_NET** | Trusted | `192.168.20.0/24` | Internal corporate network protected by default-deny firewall policy |
-
-### Asset Inventory
-
-| VM | Role | OS | Network |
-| :--- | :--- | :--- | :--- |
-| **EDGE-RTR01** | Edge Router | Ubuntu Server 25.10 | WAN + DMZ |
-| **PFSENSE-FW01** | Firewall / Gateway | pfSense | DMZ + LAN |
-| **DC01** | Domain Controller / DNS | Windows Server 2019 | LAN |
-| **PC01** | Workstation | Windows 11 | LAN |
-| **WAZUH-SIEM01** | SIEM Server | Ubuntu Server 22.04.5 | LAN |
-| **ELK-SIEM01** | Log Pipeline / Visualization | Ubuntu Server | LAN |
-| **NESSUS-SCAN01** | Vulnerability Scanner | Tenable Core | LAN |
-| **ATTACKER01** | Threat Actor | Kali Linux | WAN + DMZ |
+The lab focuses on an on-premises enterprise network emulating a small organization. Key areas of focus include:
+- **Network Segmentation:** Implementing a DMZ and internal trusted networks.
+- **Defensive Capabilities:** Deploying SIEM and vulnerability management tools.
+- **Incident Response:** Validating security controls through simulated attacks.
+- **Agentic AI Attack Surface:** Deploying an intentionally vulnerable agentic AI application in the DMZ and exploring its exposure to external threats in a realistic network environment.
 
 ---
 
 ## Core Objectives
+1.  **Network Segmentation:** Design and implement three distinct zones: **WAN**, **DMZ**, and **LAN**.
+2.  **Firewall & Routing:** Deploy **pfSense** as the primary security gateway to enforce inter-zone policies.
+3.  **Edge Services:** Utilize an upstream **Edge Router** for NAT and DNS resolution for the DMZ.
+4.  **Identity Management:** Establish an **Active Directory (AD)** domain for centralized endpoint management.
+5.  **Security Monitoring (Wazuh):** Deploy **Wazuh** for endpoint detection, alert generation, and correlation across the environment.
+6. **Security Monitoring (Suricata):** A **Network TAP** (SURICATA-BR01) sits inline between PFSENSE-FW01, capturing all the network traffic in LAN_NET. This will provide NIDS. In the DMZ_NET 
+7.  **Vulnerability Management:** Use **Nessus** to identify and prioritize remediation of system misconfigurations.
+8.  **Attack Simulation:** Execute external threat scenarios originating from WAN_NET against lab infrastructure and the DMZ-hosted agentic AI application to validate detection and prevention controls.
+9.  **Agentic AI Security Research:** Deploy `AGENTICAI-01` — an intentionally vulnerable agentic AI application — in the DMZ and systematically explore its attack surface, including prompt injection, tool abuse, and privilege escalation through AI-driven actions.
+10. **Technical Documentation:** Maintain comprehensive records of lab architecture and findings.
+---
 
-| # | Objective | Status |
-| :--- | :--- | :--- |
-| 1 | **Network Segmentation** — Three-zone architecture (WAN, DMZ, LAN) | ✅ Complete |
-| 2 | **Firewall & Routing** — pfSense enforcing inter-zone policies | ✅ Complete |
-| 3 | **Edge Services** — Upstream router handling NAT and DNS for the DMZ | ✅ Complete |
-| 4 | **Identity Management** — Active Directory domain (`lab.internal`) | ✅ Complete |
-| 5 | **Security Monitoring (Wazuh)** — Endpoint detection, alerting, and correlation | 🔄 In Progress |
-| 6 | **Security Monitoring (ELK)** — Log ingestion, enrichment, and visualization with Sysmon | 🔲 Planned |
-| 7 | **Vulnerability Management** — Nessus scanning and remediation prioritization | 🔲 Planned |
-| 8 | **Attack Simulation** — External threat scenarios validating detection controls | 🔲 Planned |
-| 9 | **Technical Documentation** — Comprehensive per-device and architecture notes | 🔄 In Progress |
+## Lab Architecture & Design
+
+### Network Topology
+
+![](_attachments/cybersecurity-home-lab%20(1)-1.webp)
+
+### Network Segment Rationale
+
+| Segment     | Trust Level   | Description                                                                                                                                     |
+| :---------- | :------------ | :---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **WAN_NET** | **Untrusted** | Simulates the public internet (TEST-NET-3, `203.0.113.0/24`). This is the origin point for all simulated external threats.                      |
+| **DMZ_NET** | **Screened**  | Acts as a buffer between WAN and LAN (`192.168.10.0/24`). Hosts publicly accessible services. Requires two-boundary traversal to reach the LAN. |
+| **LAN_NET** | **Trusted**   | The core internal zone (`192.168.20.0/24`). Protected by a default-deny policy on the pfSense firewall.                                         |
+
+### Design Decisions
+#### Wazuh
+Wazuh's three central components - `wazuh-indexer`, `wazuh-manager` and `wazuh-dashboard` - are deployed on a single host `WAZUH-SIEM01` as an all-in-one installation. 
+This is appropriate for the scale of this environment; with fewer than 10 endpoints, log volume is well within the capacity of a single host. 
+In a larger enterprise environment, these components would typically run on dedicated servers to support horizontal scaling and high availability.
 
 ---
 
-## Technology Stack
+## Network Configuration
 
-**Networking**
-- pfSense · Ubuntu Server (edge routing) · VirtualBox NAT & Internal Networks
+### VirtualBox Network Mapping
+| Network Segment | VirtualBox Type  | IP Address Space  | Rationale                                            |
+| :-------------- | :--------------- | :---------------- | :--------------------------------------------------- |
+| **WAN_NET**     | NAT Network      | `203.0.113.0/24`  | Simulates public IP space; provides outbound access. |
+| **DMZ_NET**     | Internal Network | `192.168.10.0/24` | Isolated segment for DMZ services.                   |
+| **LAN_NET**     | Internal Network | `192.168.20.0/24` | Isolated segment for internal endpoints.             |
 
-**Identity & Endpoint**
-- Active Directory Domain Services · DNS · Group Policy · Sysmon
+> [!IMPORTANT]
+> **WAN_NET and DMZ_NET use static addressing.** All IP addresses in these segments are assigned manually. Internal segments like **LAN_NET** utilize DHCP provided by **pfSense** for dynamic client configuration.
 
-**Security Monitoring**
-- Wazuh (Manager · Indexer · Dashboard) · ELK Stack · Beats · OpenSearch
-
-**Attack & Recon**
-- Kali Linux · Nessus
-
----
-
-## Documentation
-
-Each device has a dedicated note serving as its single source of truth in documentation:
-
-- [`documentation/High-level Design.md`](documentation/High-level%20Design.md) — Architecture, network design, asset inventory, and design decisions
-- [`documentation/EDGE-RTR01.md`](documentation/EDGE-RTR01.md) — Edge router configuration
-- [`documentation/PFSENSE-FW01.md`](documentation/PFSENSE-FW01.md) — Firewall rules and routing
-- [`documentation/DC01.md`](documentation/DC01.md) — Active Directory, DNS, OU structure
-- [`documentation/PC01.md`](documentation/PC01.md) — Workstation setup and domain join
-- [`documentation/WAZUH-SIEM01.md`](documentation/WAZUH-SIEM01.md) — SIEM deployment and agent management
-- [`documentation/ATTACKER01.md`](documentation/ATTACKER01.md) — Attacker machine setup
+![Network Configuration](_attachments/network-configuration.webp)
 
 ---
 
-## Roadmap
+## Asset Inventory
 
-- [ ] Complete Wazuh agent deployment across all endpoints
-- [ ] Deploy ELK stack with Sysmon enrichment pipeline
-- [ ] Deploy Nessus and run initial vulnerability scan
-- [ ] Simulate attack scenarios — CVE-2025-59287, CVE-2025-21418, CVE-2025-21376
-- [ ] Deploy WSUS for lateral movement research (Update Injection)
-- [ ] Evaluate VyOS as an alternative edge router
-- [ ] Implement RADIUS/NPS for pfSense authentication
-- [ ] Explore AI enrichment for SIEM log analysis
+| VM Name           | Role                      | OS                                          | vCPU | RAM   | Storage | NIC 1 (Network / IP)       | NIC 2 (Network / IP)   | NIC 3 (Network / IP) |
+| :---------------- | :------------------------ | :------------------------------------------ | :--- | :---- | :------ | :------------------------- | :--------------------- | -------------------- |
+| [**EDGE-RTR01**](infrastructure/EDGE-RTR01.md) | Edge Router               | Ubuntu Server 25.10                         | 1    | 512MB | 10GB    | WAN: `203.0.113.3/24`      | DMZ: `192.168.10.3/24` | -                    |
+| [**PFSENSE-FW01**](infrastructure/PFSENSE-FW01.md) | Firewall                  | pfSense                                     | 1    | 2GB   | 16GB    | DMZ: `192.168.10.4/24`     | LAN: `192.168.20.1/24` | -                    |
+| [**ATTACKER01**](infrastructure/ATTACKER01.md) | Threat Actor              | Kali Linux                                  | 2    | 2GB   | 20GB    | WAN: `203.0.113.4/24`      | DMZ: `192.168.10.5/24` | LAN: `DHCP`          |
+| [**DC01**](infrastructure/DC01.md) | Domain Controller         | Windows Server 2019                         | 4    | 4GB   | 60GB    | LAN: `192.168.20.10/24`    | -                      | -                    |
+| [**WAZUH-SIEM01**](infrastructure/WAZUH-SIEM01.md) | SIEM Server               | Ubuntu Server 22.04.5                       | 4    | 4GB   | 50GB    | LAN: `192.168.20.20/24`    | -                      | -                    |
+| [**SURICATA-BR01**](infrastructure/SURICATA-BR01.md) | Network TAP and NIDS      | Ubuntu Server 22.04.5                       | 2    | 4GB   | 50GB    | LAN:<br>`192.168.20.30/24` |                        |                      |
+| [**NESSUS-SCAN01**](infrastructure/NESSUS-SCAN01.md) | Vuln Scanner              | Tenable Core                                | 2    | 4GB   | 50GB    | LAN: `192.168.20.40/24`    | -                      | -                    |
+| [**PC01**](infrastructure/PC01.md) | Workstation               | Windows 11, version 22H2 (22621.4108) amd64 | 2    | 4GB   | 64GB    | LAN: `DHCP`                | -                      | -                    |
+| [**AGENTICAI-01**](infrastructure/AGENTICAI-01.md) | Vulnerable Agentic AI App | Ubuntu Server 22.04.5                       | 2    | 2GB   | 50GB    | DMZ: `192.168.10.6/24`     |                        |                      |
+
+### Domains
+
+| Attribute              | Value          | Description                                              |
+| ---------------------- | -------------- | -------------------------------------------------------- |
+| **Forest Root Domain** | `lab.internal` | Primary DNS name of the forest                           |
+| **NetBIOS Name**       | `LAB`          | Used for legacy compatibility and pre-windows 2000 login |
+
+### DNS Hostnames
+
+| Hostname                | IP              | Service                 | Host VM       |
+| :---------------------- | :-------------- | :---------------------- | :------------ |
+| `wazuh.lab.internal`    | `192.168.20.20` | Wazuh Dashboard (HTTPS) | WAZUH-SIEM01  |
+| `suricata.lab.internal` | `192.168.20.30` | Suricata NIDS           | SURICATA-BR01 |
+
+### IP Address Ranges
+
+| Network Segment | IP Address Range                    | Description                                       |
+| :-------------- | :---------------------------------- | :------------------------------------------------ |
+| **LAN_NET**     | `192.168.20.1` - `192.168.20.99`    | Static IPs for devices requiring them (e.g. DC01) |
+| **LAN_NET**     | `192.168.20.100` - `192.168.20.199` | DHCP IP range                                     |
+
+### Credentials
+All credentials here are intentionally weak. We are focusing on network segmentation, detection engineering, and attack simulation, not hardening authentication.
+
+| VM Name           | Username                 | Password                           | Additional                    | Description               |
+| :---------------- | :----------------------- | :--------------------------------- | ----------------------------- | ------------------------- |
+| **EDGE-RTR01**    | `router-vm`              | `P@ssw0rd123`                      |                               | VM login                  |
+| **PFSENSE-FW01**  | `admin`                  | `P@ssw0rd123`                      |                               | Web interface login       |
+| **ATTACKER01**    | `kali`                   | `kali`                             |                               | VM Login                  |
+| **DC01**          | `Administrator`          | `P@ssw0rd123`                      | DSRM: `P@ssw0rd123`           | Local administrator login |
+| **PC01**          | `jdoe@lab.internal`      | `P@ssw0rd123`                      |                               | Standard user login       |
+| **DC01**          | `fvillalon@lab.internal` | `P@ssw0rd123`                      |                               | Domain Admin login        |
+| **WAZUH-SIEM01**  | `wazuh-siem01`           | `P@ssw0rd123`                      |                               | VM / SSH login            |
+| **WAZUH-SIEM01**  | `admin`                  | `6kN+Inwz2HU9GnTY*Fmt9DxshWLKTGbq` | `https://wazuh.lab.internal/` | Web interface login       |
+| **AGENTICAI-01**  | `agenticai-01`           | `P@ssw0rd123`                      |                               | VM Login                  |
+| **SURICATA-BR01** | `suricata-br01`          | `P@ssw0rd123`                      | `suricata.lab.internal`       | VM Login                  |
+
+---
+
+## Future Roadmap
+
+> [!NOTE]
+> **Backlog & Enhancements**
+> - [ ] Evaluate VyOS as an alternative edge router. Current implementation is just a simple ubuntu server that forwards logs. IPs are set statically in DMZ so no DHCP implemented.
+> - [ ] Implement RADIUS/NPS for pfSense authentication.
+> - [ ] Deploy WSUS for lateral movement research (Update Injection).
+> - [ ] Add AI enrichment to SIEM logs or maybe n8n pipeline (SOAR) -> AI on Blue Team
+> - [ ] Security Monitoring (ELK): Deploy an ELK stack (Elasticsearch, Logstash, Kibana) with Beats agents and Sysmon for log ingestion, enrichment, and visualization.
+> - [ ] Work through the CIS Benchmarks for the critical devices in the lab
+> - [ ] Integrate YARA scanning, post-incident enhancement
+
