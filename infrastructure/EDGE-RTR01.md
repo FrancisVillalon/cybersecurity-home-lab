@@ -21,14 +21,14 @@ EDGE-RTR01 serves as the boundary device between the **WAN_NET** and the **DMZ_N
 
 ## VM Hardware Configuration
 
-| Feature     | Configuration                 |
-| :---------- | :---------------------------- |
-| **OS**      | Ubuntu Server (Latest LTS)    |
-| **RAM**     | 512MB                         |
-| **vCPU**    | 1 Core                        |
-| **Disk**    | 10GB                          |
-| **NIC 1**   | `WAN_NET` (NAT Network)       |
-| **NIC 2**   | `DMZ_NET` (Internal Network)  |
+| Feature   | Configuration                |
+| :-------- | :--------------------------- |
+| **OS**    | Ubuntu Server 25.10          |
+| **RAM**   | 512MB                        |
+| **vCPU**  | 1 Core                       |
+| **Disk**  | 10GB                         |
+| **NIC 1** | `WAN_NET` (NAT Network)      |
+| **NIC 2** | `DMZ_NET` (Internal Network) |
 
 
 > [!IMPORTANT]

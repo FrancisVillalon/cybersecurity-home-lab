@@ -25,7 +25,7 @@ SURICATA-BR01 is the network intrusion detection sensor for the lab. It sits inl
 | **Network** | `LAN_NET` (Static IP: `192.168.20.30`) |
 
 > [!IMPORTANT]
-> In VirtualBox, both NICs must be attached to **LAN_NET**. The internal network name used here must match the one configured on PFSENSE-FW01's LAN interface — if they differ, the bridge won't see the traffic it's supposed to monitor.
+> In VirtualBox, one NIC must be attached to **PFSENSE_LAN_NET** and the other to **LAN_NET**. This split is intentional — it's a workaround for a VirtualBox limitation that forces all traffic through the Linux bridge on SURICATA-BR01 before it reaches the rest of LAN_NET.
 
 ---
 
@@ -66,13 +66,16 @@ resolvectl status
 SURICATA-BR01 uses a Linux bridge (`br01`) as its primary interface. The two physical NICs are added as bridge members in Netplan — all traffic flowing between them passes through `br01`, which is where Suricata listens.
 
 ### Interface Assignment
+**Promiscuous mode must be enabled on both NICs.** Without it, VirtualBox will only deliver frames addressed directly to each NIC's MAC address — the bridge will never see traffic it needs to forward, and Suricata will miss everything. Set each NIC to **Allow All** under the Advanced network settings in VirtualBox.
 
 ![](../_attachments/fecfc7f3f51cc719a9eeda802ac94eeba816c5f02a2e683d2887039d7786c9b1.webp)
 
 ![](../_attachments/bf8d8af74fb6f5511b4328c862ef16f6f7996d0a2f4b2ad268ec00bbe3ef7f69.webp)
 
 > [!IMPORTANT]
-> The VirtualBox internal network name on SURICATA-BR01's NICs must match the internal network name on PFSENSE-FW01's LAN interface. Both sides need to be on the same internal network.
+> SURICATA-BR01's two NICs are attached to **different** VirtualBox internal networks — one to **PFSENSE_LAN_NET** and the other to **LAN_NET**. This is intentional: VirtualBox does not allow a single internal network to be bridged transparently, so splitting across two named networks is what forces all traffic through the Linux bridge on SURICATA-BR01 before it reaches the rest of LAN_NET.
+
+
 
 ![](../_attachments/ddc54ea5fa928e3466a9b341e46d37fa94c5971bc83a41af9804362a7676d4fb.webp)
 

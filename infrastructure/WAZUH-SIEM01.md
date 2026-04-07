@@ -116,7 +116,7 @@ resolvectl status
 
 | Field    | Value           |
 | :------- | :-------------- |
-| **Name** | `wazuh-siem01`  |
+| **Name** | `wazuh`         |
 | **IP**   | `192.168.20.20` |
 
 ![](../_attachments/WAZUH-SIEM01-A.webp)
@@ -269,6 +269,63 @@ Using DC01 as an example — add it to both `domain-controllers` and `windows-ba
 
 
 
+
+## Enabling the Archives Index
+
+By default, Wazuh writes all ingested logs to `archives.log` but does not index them in OpenSearch — only events that match a rule are indexed into `wazuh-alerts-*`. Enabling the archives index allows unmatched logs (e.g. dnsmasq, raw syslog) to be queried in Discover.
+
+### 1. Enable JSON archiving on the manager
+
+In `/var/ossec/etc/ossec.conf`, ensure the `<global>` block contains:
+
+```xml
+<logall>yes</logall>
+<logall_json>yes</logall_json>
+```
+
+Restart the manager:
+
+```bash
+sudo systemctl restart wazuh-manager
+```
+
+This causes the manager to write all received events to `/var/ossec/logs/archives/archives.json` in addition to `archives.log`. This is incredible for debugging issues where we need to check if logs are being ingested properly.
+
+### 2. Enable the archives input in Filebeat
+
+Filebeat ships logs from the manager to the OpenSearch indexer. The archives input is present in the config but disabled by default.
+
+In `/etc/filebeat/filebeat.yml`, find the `archives` section and set:
+
+```yaml
+archives:
+  enabled: true
+```
+
+Restart Filebeat:
+
+```bash
+sudo systemctl restart filebeat
+```
+
+### 3. Create the index pattern in OpenSearch Dashboards
+
+Navigate to:
+
+```
+https://wazuh.lab.internal/app/management/opensearch-dashboards/indexPatterns
+```
+
+Click **Create index pattern** and set:
+
+| Field | Value |
+| :--- | :--- |
+| **Index pattern name** | `wazuh-archives-*` |
+| **Time field** | `timestamp` |
+
+The archives index is now queryable in **Discover** by selecting `wazuh-archives-*` from the index dropdown.
+
+---
 
 ## Troubleshooting
 
