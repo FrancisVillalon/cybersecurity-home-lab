@@ -183,13 +183,16 @@ Agents are deployed through the web interface at `https://wazuh.lab.internal/`. 
 
 Wazuh groups allow us to push a single configuration uniformly to all agents in that group. In the context of this lab, this is useful because rather than configuring each agent individually to ingest Sysmon logs, we can push a single `agent.conf` to all agents in the group at once.
 
+
+We will create the following groups and assign the following memberships in this setup. Moving forward, as changes are introduced to infrastructure, a section in high-level design or the readme of the project will have a table that is updated to reflect the latest changes.
+
 #### Groups
 
-| Group | Purpose |
-| :--- | :--- |
-| `windows-baseline` | Common config for all Windows endpoints |
+| Group                | Purpose                                       |
+| :------------------- | :-------------------------------------------- |
+| `windows-baseline`   | Common config for all Windows endpoints       |
 | `domain-controllers` | DC-specific config (AD logs, stricter Sysmon) |
-| `linux-baseline` | Common config for all Linux endpoints |
+| `linux-baseline`     | Common config for all Linux endpoints         |
 
 #### Group Membership
 

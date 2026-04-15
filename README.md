@@ -21,9 +21,9 @@ This project documents the design, implementation, and operation of a virtualize
 
 ## Attack Simulations
 
-| # | Simulation | Summary |
-|---|---|---|
-| 1 | [Agentic AI Exploitation](Agentic%20AI%20Exploitation.md) | Prompt injection against a vulnerable agentic AI application in the DMZ — results in arbitrary file write as root with no privilege escalation required. |
+| #   | Simulation                                                | Summary                                                                                                                                                  |
+| --- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | [Agentic AI Exploitation](Agentic%20AI%20Exploitation.md) | Prompt injection against a vulnerable agentic AI application in the DMZ — results in arbitrary file write as root with no privilege escalation required. |
 
 ---
 
@@ -138,6 +138,38 @@ All credentials here are intentionally weak. We are focusing on network segmenta
 | **WAZUH-SIEM01**  | `admin`                  | `6kN+Inwz2HU9GnTY*Fmt9DxshWLKTGbq` | `https://wazuh.lab.internal/` | Web interface login       |
 | **AGENTICAI-01**  | `agenticai-01`           | `P@ssw0rd123`                      |                               | VM Login                  |
 | **SURICATA-BR01** | `suricata-br01`          | `P@ssw0rd123`                      | `suricata.lab.internal`       | VM Login                  |
+
+---
+
+## Security Monitoring
+
+### Wazuh Agent Groups
+
+Wazuh groups allow a single `agent.conf` to be pushed uniformly to all agents in that group. Groups are managed from **Agent Management → Groups** on the Wazuh dashboard.
+
+| Group                | Purpose                                                        | Comments                                                                                                 |
+| :------------------- | :------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------- |
+| `windows-baseline`   | Common config for all Windows endpoints — Sysmon log ingestion |                                                                                                          |
+| `domain-controllers` | DC-specific config — AD event logs, stricter Sysmon policy     |                                                                                                          |
+| `linux-baseline`     | Common config for all Linux endpoints                          |                                                                                                          |
+| `dmz-servers`        | DMZ-specific config — FIM on `/etc` with realtime monitoring   |                                                                                                          |
+| `dmz-resume-app`     | Application log ingestion — `/opt/resumeapp/logs/*.log`        | Logs are viewed raw on archives index in discover tab of web UI. No custom decoder and as such no rules. |
+| `suricata`           | Suricata log ingestion  — `/var/log/suricata/eve.json`         |                                                                                                          |
+| `edge-routers`       | dnsmasq.log ingestion — `/var/log/dnsmasq.log`                 | Logs are viewed raw on archives index in discover tab of web UI. No custom decoder and as such no rules. |
+
+### Agent Group Membership
+
+| Device           | Agent ID | Groups                                            | Collection Method                                  |
+| :--------------- | :------- | :------------------------------------------------ | :------------------------------------------------- |
+| **WAZUH-SIEM01** | `000`    | —                                                 | Configured locally via `/var/ossec/etc/ossec.conf` |
+| **DC01**         | —        | `windows-baseline`, `domain-controllers`          | Wazuh agent                                        |
+| **PC01**         | —        | `windows-baseline`                                | Wazuh agent                                        |
+| **AGENTICAI-01** | —        | `linux-baseline`, `dmz-servers`, `dmz-resume-app` | Wazuh agent                                        |
+| **EDGE-RTR01**   | —        | `linux-baseline`, `suricata`, `edge-routers`      | Wazuh Agent                                        |
+| **PFSENSE-FW01** | —        | —                                                 | Syslog forwarding only                             |
+
+> [!NOTE]
+> WAZUH-SIEM01 is agent ID `000` — the manager itself. It cannot be assigned to a group and is configured directly on the host.
 
 ---
 
