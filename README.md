@@ -159,14 +159,15 @@ Wazuh groups allow a single `agent.conf` to be pushed uniformly to all agents in
 
 ### Agent Group Membership
 
-| Device           | Agent ID | Groups                                            | Collection Method                                  |
-| :--------------- | :------- | :------------------------------------------------ | :------------------------------------------------- |
-| **WAZUH-SIEM01** | `000`    | —                                                 | Configured locally via `/var/ossec/etc/ossec.conf` |
-| **DC01**         | —        | `windows-baseline`, `domain-controllers`          | Wazuh agent                                        |
-| **PC01**         | —        | `windows-baseline`                                | Wazuh agent                                        |
-| **AGENTICAI-01** | —        | `linux-baseline`, `dmz-servers`, `dmz-resume-app` | Wazuh agent                                        |
-| **EDGE-RTR01**   | —        | `linux-baseline`, `suricata`, `edge-routers`      | Wazuh Agent                                        |
-| **PFSENSE-FW01** | —        | —                                                 | Syslog forwarding only                             |
+| Device            | Agent ID | Groups                                            | Collection Method                                  |
+| :---------------- | :------- | :------------------------------------------------ | :------------------------------------------------- |
+| **WAZUH-SIEM01**  | `000`    | —                                                 | Configured locally via `/var/ossec/etc/ossec.conf` |
+| **DC01**          | —        | `windows-baseline`, `domain-controllers`          | Wazuh agent                                        |
+| **PC01**          | —        | `windows-baseline`                                | Wazuh agent                                        |
+| **AGENTICAI-01**  | —        | `linux-baseline`, `dmz-servers`, `dmz-resume-app` | Wazuh agent                                        |
+| **EDGE-RTR01**    | —        | `linux-baseline`, `suricata`, `edge-routers`      | Wazuh Agent                                        |
+| **PFSENSE-FW01**  | —        | —                                                 | Syslog forwarding only                             |
+| **SURICATA-BR01** | —        | `linux-baseline`, `suricata`                      | Wazuh agent                                        |
 
 > [!NOTE]
 > WAZUH-SIEM01 is agent ID `000` — the manager itself. It cannot be assigned to a group and is configured directly on the host.
